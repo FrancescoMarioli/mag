@@ -2,8 +2,11 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Riconoscimento Testo</title>
+    <title>Riconoscimento Testo Migliorato</title>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <style>
+        canvas { display: none; }
+    </style>
 </head>
 <body>
     <h1>Rileva Testo con la Fotocamera</h1>
@@ -21,31 +24,34 @@
             .then(stream => {
                 video.srcObject = stream;
                 video.play();
-                console.log("Fotocamera attivata correttamente");
             })
             .catch(err => {
-                console.error("Errore nell'accesso alla fotocamera:", err);
-                alert("Non è stato possibile accedere alla fotocamera: " + err.message);
+                alert("Errore nell'accesso alla fotocamera: " + err.message);
             });
 
         captureButton.addEventListener('click', () => {
-            console.log("Bottone premuto per catturare testo");
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Riconosci il testo dall'immagine
-            Tesseract.recognize(canvas.toDataURL(), 'eng', { logger: info => console.log(info) })
-                .then(({ data: { text } }) => {
-                    output.textContent = text; // Mostra il testo rilevato
-                    console.log("Testo rilevato:", text);
-                })
-                .catch(err => {
-                    console.error("Errore durante il riconoscimento del testo:", err);
-                    alert("Errore nel riconoscimento del testo: " + err.message);
-                });
+            // Migliora il riconoscimento dei numeri
+            Tesseract.recognize(canvas.toDataURL(), 'eng', {
+                lang: 'eng',
+                tessedit_char_whitelist: '0123456789',
+                preserve_interword_spaces: '1',
+                tessedit_zero_mutation: true,
+                tessedit_do_invert: true,
+                tessedit_ocr_engine_mode: Tesseract.OEM.DEFAULT,
+                tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK_VERT_TEXT
+            })
+            .then(({ data: { text } }) => {
+                output.textContent = text.replace(/\s+/g, ''); // Rimuove spazi extra
+            })
+            .catch(err => {
+                alert("Errore nel riconoscimento del testo: " + err.message);
+            });
         });
     </script>
 </body>
