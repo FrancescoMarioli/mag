@@ -2,20 +2,51 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webapp OCR</title>
-
-    <!-- Inclusione di Tesseract.js tramite CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
+    <title>Riconoscimento Testo</title>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
 </head>
 <body>
     <h1>Rileva Testo con la Fotocamera</h1>
-    <video id="video" autoplay></video>
+    <video id="video" width="640" height="480" autoplay playsinline></video>
     <button id="capture">Cattura Testo</button>
-    <p id="result">Risultato: <span id="output"></span></p>
+    <div>Risultato: <span id="output"></span></div>
 
-    <!-- Il tuo script personalizzato -->
-    <script src="app.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        const output = document.getElementById('output');
+
+        // Attiva la fotocamera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+                console.log("Fotocamera attivata correttamente");
+            })
+            .catch(err => {
+                console.error("Errore nell'accesso alla fotocamera:", err);
+                alert("Non è stato possibile accedere alla fotocamera: " + err.message);
+            });
+
+        captureButton.addEventListener('click', () => {
+            console.log("Bottone premuto per catturare testo");
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Riconosci il testo dall'immagine
+            Tesseract.recognize(canvas.toDataURL(), 'eng', { logger: info => console.log(info) })
+                .then(({ data: { text } }) => {
+                    output.textContent = text; // Mostra il testo rilevato
+                    console.log("Testo rilevato:", text);
+                })
+                .catch(err => {
+                    console.error("Errore durante il riconoscimento del testo:", err);
+                    alert("Errore nel riconoscimento del testo: " + err.message);
+                });
+        });
+    </script>
 </body>
 </html>
-
